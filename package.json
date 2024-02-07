@@ -1,0 +1,28 @@
+{
+  "name": "@space-operator/client",
+  "version": "0.6.0",
+  "description": "API Library for space-operator",
+  "main": "dist/main/index.js",
+  "module": "dist/module/index.js",
+  "types": "dist/module/index.d.ts",
+  "files": [
+    "/dist",
+    "/src"
+  ],
+  "author": "Space Operator",
+  "license": "MIT",
+  "scripts": {
+    "build:main": "tsc -p tsconfig.json",
+    "build:module": "tsc -p tsconfig.module.json",
+    "format": "prettier --write \"{src,test}/**/*.ts\"",
+    "build": "npm run format && npm run build:main && npm run build:module"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.89.1",
+    "bs58": "^5.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  }
+}
