@@ -46,75 +46,75 @@ export class Value implements IValue {
     return Object.values(this)[0];
   }
 
-  public static fromJSValue(
-    x: any,
-    customConvert?: (x: any) => Value | null
-  ): Value | null {
-    switch (typeof x) {
-      case 'number':
-        return new Value({ D: x.toString() });
-      case 'boolean':
-        return new Value({ B: x });
-      case 'string':
-        return new Value({ S: x });
-      case 'undefined':
-        return new Value({ N: 0 });
-      case 'function':
-        return null;
-      case 'bigint':
-        return new Value({ D: x.toString() });
-      case 'object':
-        if (x === null) {
-          return new Value({ N: 0 });
-        }
-        if (x instanceof Array) {
-          return new Value({
-            A: x
-              .map((x) => Value.fromJSValue(x, customConvert))
-              .filter((x) => x != null) as IValue[],
-          });
-        }
-        if (x instanceof PublicKey) {
-          return new Value({ B3: x.toBase58() });
-        }
-        if (x instanceof Keypair) {
-          return new Value({
-            B6: bs58.encode([...x.secretKey, ...x.publicKey.encode()]),
-          });
-        }
-        if (x.byteLength != null) {
-          switch (x.byteLength) {
-            case 32:
-              return new Value({
-                B3: bs58.encode(x),
-              });
-            case 64:
-              return new Value({
-                B6: bs58.encode(x),
-              });
-            default:
-              return new Value({
-                BY: x.toString('base64'),
-              });
-          }
-        }
-        if (customConvert != null) {
-          const result = customConvert(x);
-          if (result != null) {
-            return result;
-          }
-        }
-        return new Value({
-          M: Object.fromEntries(
-            Object.entries(x)
-              .map(([k, v]) => [k, Value.fromJSValue(v, customConvert)])
-              .filter(([_k, v]) => v != null)
-          ),
-        });
-      default:
-        return null;
-    }
-  }
+  // public static fromJSValue(
+  //   x: any,
+  //   customConvert?: (x: any) => Value | null
+  // ): Value | null {
+  //   switch (typeof x) {
+  //     case 'number':
+  //       return new Value({ D: x.toString() });
+  //     case 'boolean':
+  //       return new Value({ B: x });
+  //     case 'string':
+  //       return new Value({ S: x });
+  //     case 'undefined':
+  //       return new Value({ N: 0 });
+  //     case 'function':
+  //       return null;
+  //     case 'bigint':
+  //       return new Value({ D: x.toString() });
+  //     case 'object':
+  //       if (x === null) {
+  //         return new Value({ N: 0 });
+  //       }
+  //       if (x.length != null) {
+  //         return new Value({
+  //           A: Array.from(x)
+  //             .map((x) => Value.fromJSValue(x, customConvert))
+  //             .filter((x) => x != null) as IValue[],
+  //         });
+  //       }
+  //       if (x instanceof PublicKey) {
+  //         return new Value({ B3: x.toBase58() });
+  //       }
+  //       if (x instanceof Keypair) {
+  //         return new Value({
+  //           B6: bs58.encode([...x.secretKey, ...x.publicKey.encode()]),
+  //         });
+  //       }
+  //       if (x.byteLength != null) {
+  //         switch (x.byteLength) {
+  //           case 32:
+  //             return new Value({
+  //               B3: bs58.encode(x),
+  //             });
+  //           case 64:
+  //             return new Value({
+  //               B6: bs58.encode(x),
+  //             });
+  //           default:
+  //             return new Value({
+  //               BY: x.toString('base64'),
+  //             });
+  //         }
+  //       }
+  //       if (customConvert != null) {
+  //         const result = customConvert(x);
+  //         if (result != null) {
+  //           return result;
+  //         }
+  //       }
+  //       return new Value({
+  //         M: Object.fromEntries(
+  //           Object.entries(x)
+  //             .map(([k, v]) => [k, Value.fromJSValue(v, customConvert)])
+  //             .filter(([_k, v]) => v != null)
+  //         ),
+  //       });
+  //     default:
+  //       return null;
+  //   }
+  // }
 
   public toJSObject(): any {
     if (this.S != null) return this.S;
