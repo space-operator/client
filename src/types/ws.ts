@@ -1,4 +1,8 @@
-import { Message, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  PublicKey,
+  VersionedMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { FlowRunId, NodeId } from './common';
 import { Value } from './values';
 import { decode as base58Decode } from 'bs58';
@@ -156,12 +160,12 @@ export class SignatureRequest implements ISignatureRequest {
     this.signatures = x.signatures;
   }
 
-  buildTransaction(): Transaction {
+  buildTransaction(): VersionedTransaction {
     const buffer = Buffer.from(this.message, 'base64');
-    const solMsg = Message.from(buffer);
-    const tx = Transaction.populate(solMsg);
+    const solMsg = VersionedMessage.deserialize(buffer);
+    const tx = new VersionedTransaction(solMsg);
     if (this.signatures) {
-      this.signatures.map(({ pubkey, signature }) =>
+      this.signatures.forEach(({ pubkey, signature }) =>
         tx.addSignature(
           new PublicKey(pubkey),
           Buffer.from(base58Decode(signature))
