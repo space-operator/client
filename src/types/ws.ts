@@ -188,7 +188,7 @@ export class SignatureRequest implements ISignatureRequest {
         }),
         data: Buffer.from(cIns.data),
       };
-      return new TransactionInstruction(init);
+      newTx.add(new TransactionInstruction(init));
     });
 
     if (this.signatures) {
