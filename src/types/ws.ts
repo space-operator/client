@@ -1,4 +1,12 @@
-import { Message, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  AccountMeta,
+  Message,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+  TransactionInstructionCtorFields,
+} from '@solana/web3.js';
 import { FlowRunId, NodeId } from './common';
 import { Value } from './values';
 import { decode as base58Decode } from 'bs58';
@@ -160,16 +168,39 @@ export class SignatureRequest implements ISignatureRequest {
     const buffer = Buffer.from(this.message, 'base64');
     const solMsg = Message.from(buffer);
     const tx = Transaction.populate(solMsg);
+
+    const newTx = new Transaction();
+    newTx.feePayer = tx.feePayer;
+    newTx.recentBlockhash = tx.recentBlockhash;
+    newTx.nonceInfo = tx.nonceInfo;
+
+    solMsg.compiledInstructions.forEach((cIns) => {
+      const init: TransactionInstructionCtorFields = {
+        programId: solMsg.accountKeys[cIns.programIdIndex],
+
+        keys: cIns.accountKeyIndexes.map((i) => {
+          const x: AccountMeta = {
+            pubkey: solMsg.accountKeys[i],
+            isSigner: solMsg.isAccountSigner(i),
+            isWritable: solMsg.isAccountWritable(i),
+          };
+          return x;
+        }),
+        data: Buffer.from(cIns.data),
+      };
+      return new TransactionInstruction(init);
+    });
+
     if (this.signatures) {
       this.signatures.map(({ pubkey, signature }) =>
-        tx.addSignature(
+        newTx.addSignature(
           new PublicKey(pubkey),
           Buffer.from(base58Decode(signature))
         )
       );
     }
 
-    return tx;
+    return newTx;
   }
 }
 
