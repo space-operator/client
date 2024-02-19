@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { FlowId, FlowRunId, RestResult } from './types/common';
 import { StartFlowOutput, StartFlowParams } from './types/rest/start-flow';
 import {
@@ -14,6 +14,8 @@ import {
   SubmitSignatureOutput,
   SubmitSignatureParams,
 } from './types/rest/submit-signature';
+import { SignatureRequest } from './types/ws';
+import { encode as base58Encode } from 'bs58';
 
 export interface Options {
   url?: string;
@@ -151,5 +153,33 @@ export class Client {
     } catch (error: any) {
       return { error: error.toString() };
     }
+  }
+
+  async signAndSubmitSignature(
+    req: SignatureRequest,
+    publicKey: any,
+    signTransaction: any
+  ) {
+    const pk = new PublicKey(req.pubkey);
+    if (!publicKey.equals(pk)) {
+      throw `different public key:\nrequested: ${
+        req.pubkey
+      }}\nwallet: ${publicKey.toBase58()}`;
+    }
+    const tx = req.buildTransaction();
+    const signedTx: Transaction = await signTransaction(tx);
+    const signature = signedTx.signatures.find(({ publicKey }) =>
+      publicKey.equals(pk)
+    )?.signature;
+    if (signature == null) throw 'signature is null';
+
+    const before = tx.serializeMessage();
+    const after = signedTx.serializeMessage();
+    const new_msg = before.equals(after) ? undefined : after.toString('base64');
+    await this.submitSignature({
+      id: req.id,
+      signature: base58Encode(signature),
+      new_msg,
+    });
   }
 }
