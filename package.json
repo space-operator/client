@@ -1,8 +1,9 @@
 {
   "name": "@space-operator/client",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "API Library for space-operator",
   "main": "dist/main/index.js",
+  "module": "dist/module/index.js",
   "types": "dist/module/index.d.ts",
   "files": [
     "/dist",
@@ -14,7 +15,7 @@
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
     "format": "prettier --write \"{src,test}/**/*.ts\"",
-    "build": "npm run format && npm run build:main"
+    "build": "npm run format && npm run build:main build:module"
   },
   "dependencies": {
     "@solana/web3.js": "^1.89.1",
