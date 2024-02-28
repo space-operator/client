@@ -16,20 +16,24 @@ import {
 } from './types/rest/submit-signature';
 import { SignatureRequest } from './types/ws';
 import * as bs58 from 'bs58';
+import * as web3 from '@solana/web3.js';
 
 export interface ClientOptions {
-  url?: string;
+  host?: string;
   token?: string | (() => Promise<string>);
 }
 
-const REST_URL = 'https://dev-api.spaceoperator.com';
+const HOST = 'https://dev-api.spaceoperator.com';
+
+function noop() {}
 
 export class Client {
-  url: string;
+  host: string;
   token?: string | (() => Promise<string>);
+  private logger: Function = noop;
 
   constructor(options: ClientOptions) {
-    this.url = options.url ?? REST_URL;
+    this.host = options.host ?? HOST;
     this.token = options.token;
   }
 
@@ -45,8 +49,12 @@ export class Client {
       case 'function':
         return await this.token();
       default:
-        throw 'invalid token type';
+        throw new Error('invalid token type');
     }
+  }
+
+  public setLogger(logger: Function) {
+    this.logger = logger;
   }
 
   async startFlow(
@@ -56,9 +64,9 @@ export class Client {
     try {
       const token = await this.getToken();
       if (token == null) {
-        throw 'no authentication token';
+        throw new Error('no authentication token');
       }
-      const resp = await fetch(`${this.url}/flow/start/${id}`, {
+      const resp = await fetch(`${this.host}/flow/start/${id}`, {
         method: 'POST',
         headers: {
           authorization: token,
@@ -79,9 +87,9 @@ export class Client {
     try {
       const token = await this.getToken();
       if (token == null) {
-        throw 'no authentication token';
+        throw new Error('no authentication token');
       }
-      const resp = await fetch(`${this.url}/flow/start_shared/${id}`, {
+      const resp = await fetch(`${this.host}/flow/start_shared/${id}`, {
         method: 'POST',
         headers: {
           authorization: token,
@@ -101,7 +109,7 @@ export class Client {
     params: StartFlowUnverifiedParams
   ): Promise<RestResult<StartFlowUnverifiedOutput>> {
     try {
-      const resp = await fetch(`${this.url}/flow/start_unverified/${id}`, {
+      const resp = await fetch(`${this.host}/flow/start_unverified/${id}`, {
         method: 'POST',
         headers: {
           authorization: publicKey.toBase58(),
@@ -122,9 +130,9 @@ export class Client {
     try {
       const token = await this.getToken();
       if (token == null) {
-        throw 'no authentication token';
+        throw new Error('no authentication token');
       }
-      const resp = await fetch(`${this.url}/flow/stop/${runId}`, {
+      const resp = await fetch(`${this.host}/flow/stop/${runId}`, {
         method: 'POST',
         headers: {
           authorization: token,
@@ -142,7 +150,7 @@ export class Client {
     params: SubmitSignatureParams
   ): Promise<RestResult<SubmitSignatureOutput>> {
     try {
-      const resp = await fetch(`${this.url}/signature/submit`, {
+      const resp = await fetch(`${this.host}/signature/submit`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -157,21 +165,23 @@ export class Client {
 
   async signAndSubmitSignature(
     req: SignatureRequest,
-    publicKey: any,
-    signTransaction: any
+    publicKey: web3.PublicKey,
+    signTransaction: (tx: web3.Transaction) => Promise<Transaction>
   ) {
-    const pk = new PublicKey(req.pubkey);
-    if (!publicKey.equals(pk)) {
-      throw `different public key:\nrequested: ${
-        req.pubkey
-      }}\nwallet: ${publicKey.toBase58()}`;
+    const requestedPublicKey = new PublicKey(req.pubkey);
+    if (!publicKey.equals(requestedPublicKey)) {
+      throw new Error(
+        `different public key:\nrequested: ${
+          req.pubkey
+        }}\nwallet: ${publicKey.toBase58()}`
+      );
     }
     const tx = req.buildTransaction();
     const signedTx: Transaction = await signTransaction(tx);
     const signature = signedTx.signatures.find(({ publicKey }) =>
-      publicKey.equals(pk)
+      publicKey.equals(requestedPublicKey)
     )?.signature;
-    if (signature == null) throw 'signature is null';
+    if (signature == null) throw new Error('signature is null');
 
     const before = tx.serializeMessage();
     const after = signedTx.serializeMessage();

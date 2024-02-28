@@ -169,27 +169,33 @@ export class SignatureRequest implements ISignatureRequest {
     const solMsg = Message.from(buffer);
     const tx = Transaction.populate(solMsg);
 
-    const newTx = new Transaction();
-    newTx.feePayer = tx.feePayer;
-    newTx.recentBlockhash = tx.recentBlockhash;
-    newTx.nonceInfo = tx.nonceInfo;
+    const newTx = tx;
 
-    solMsg.compiledInstructions.forEach((cIns) => {
-      const init: TransactionInstructionCtorFields = {
-        programId: solMsg.accountKeys[cIns.programIdIndex],
+    // TODO: not sure if we still need this
+    // https://github.com/anza-xyz/wallet-adapter/issues/806
+    // https://github.com/solana-labs/solana/issues/21722
 
-        keys: cIns.accountKeyIndexes.map((i) => {
-          const x: AccountMeta = {
-            pubkey: solMsg.accountKeys[i],
-            isSigner: solMsg.isAccountSigner(i),
-            isWritable: solMsg.isAccountWritable(i),
-          };
-          return x;
-        }),
-        data: Buffer.from(cIns.data),
-      };
-      newTx.add(new TransactionInstruction(init));
-    });
+    // const newTx = new Transaction();
+    // newTx.feePayer = tx.feePayer;
+    // newTx.recentBlockhash = tx.recentBlockhash;
+    // newTx.nonceInfo = tx.nonceInfo;
+
+    // solMsg.compiledInstructions.forEach((cIns) => {
+    //   const init: TransactionInstructionCtorFields = {
+    //     programId: solMsg.accountKeys[cIns.programIdIndex],
+
+    //     keys: cIns.accountKeyIndexes.map((i) => {
+    //       const x: AccountMeta = {
+    //         pubkey: solMsg.accountKeys[i],
+    //         isSigner: solMsg.isAccountSigner(i),
+    //         isWritable: solMsg.isAccountWritable(i),
+    //       };
+    //       return x;
+    //     }),
+    //     data: Buffer.from(cIns.data),
+    //   };
+    //   newTx.add(new TransactionInstruction(init));
+    // });
 
     if (this.signatures) {
       this.signatures.map(({ pubkey, signature }) =>
