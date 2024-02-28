@@ -15,9 +15,9 @@ import {
   SubmitSignatureParams,
 } from './types/rest/submit-signature';
 import { SignatureRequest } from './types/ws';
-import { encode as base58Encode } from 'bs58';
+import * as bs58 from 'bs58';
 
-export interface Options {
+export interface ClientOptions {
   url?: string;
   token?: string | (() => Promise<string>);
 }
@@ -28,7 +28,7 @@ export class Client {
   url: string;
   token?: string | (() => Promise<string>);
 
-  constructor(options: Options) {
+  constructor(options: ClientOptions) {
     this.url = options.url ?? REST_URL;
     this.token = options.token;
   }
@@ -178,7 +178,7 @@ export class Client {
     const new_msg = before.equals(after) ? undefined : after.toString('base64');
     await this.submitSignature({
       id: req.id,
-      signature: base58Encode(signature),
+      signature: bs58.encode(signature),
       new_msg,
     });
   }

@@ -1,5 +1,5 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
 import * as bs58 from 'bs58';
+import * as base64 from 'base64-js';
 
 export interface IValue {
   S?: string;
@@ -103,7 +103,7 @@ export class Value implements IValue {
               });
             default:
               return new Value({
-                BY: x.toString('base64'),
+                BY: base64.fromByteArray(x),
               });
           }
         }

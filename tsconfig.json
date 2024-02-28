@@ -3,6 +3,7 @@
     "module": "commonjs",
     "target": "es2019",
     "declaration": true,
+    "declarationMap": true,
     "outDir": "./dist/main",
     "rootDir": "src",
     "sourceMap": true,

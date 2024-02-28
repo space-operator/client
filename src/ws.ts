@@ -12,7 +12,7 @@ import {
   WsResponse,
 } from './types/ws';
 
-export interface Options {
+export interface WcClientOptions {
   url?: string;
   token?: string | (() => Promise<string>);
   logger?: (msg: string, data: any) => any;
@@ -34,7 +34,7 @@ export class WsClient {
   private streamCallbacks: Map<number, { callback: Function }> = new Map();
   private queue: Array<string> = [];
 
-  constructor(options: Options) {
+  constructor(options: WcClientOptions) {
     this.url = options.url ?? WS_URL;
     this.token = options.token;
     this.logger = options.logger ?? noop;

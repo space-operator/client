@@ -2,11 +2,11 @@ import {
   AccountMeta,
   Message,
   PublicKey,
-  SystemProgram,
   Transaction,
   TransactionInstruction,
   TransactionInstructionCtorFields,
 } from '@solana/web3.js';
+import { Buffer } from 'buffer';
 import { FlowRunId, NodeId } from './common';
 import { Value } from './values';
 import { decode as base58Decode } from 'bs58';
