@@ -22,7 +22,7 @@ function maybePublicKey(x: any): boolean {
   if (x == null) return false;
   return (
     typeof x.toBase58 === 'function' &&
-    x.toBuffer === 'function' &&
+    typeof x.toBuffer === 'function' &&
     x.toBuffer()?.byteLength === 32
   );
 }
