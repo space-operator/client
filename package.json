@@ -15,7 +15,7 @@
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
     "format": "prettier --write \"{src,test}/**/*.ts\"",
-    "build": "npm run format && npm run build:main build:module"
+    "build": "rm dist -rf && npm run format && npm run build:main build:module"
   },
   "dependencies": {
     "@solana/web3.js": "^1.89.1",
