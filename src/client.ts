@@ -177,7 +177,9 @@ export class Client {
       );
     }
     const tx = req.buildTransaction();
+    this.logger('tx', tx);
     const signedTx: Transaction = await signTransaction(tx);
+    this.logger('signedTx', signedTx);
     const signature = signedTx.signatures.find(({ publicKey }) =>
       publicKey.equals(requestedPublicKey)
     )?.signature;
