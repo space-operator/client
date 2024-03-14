@@ -60,10 +60,74 @@ export class Value implements IValue {
     return Object.values(this)[0];
   }
 
+  public static U64(x: string | number | bigint): Value {
+    const i = BigInt(x);
+    if (i < BigInt(0) || i > BigInt('18446744073709551615')) {
+      throw new Error('value out of range');
+    }
+    return new Value({ U: i.toString() });
+  }
+
+  public static I64(x: string | number | bigint): Value {
+    const i = BigInt(x);
+    if (
+      i < BigInt('-9223372036854775808') ||
+      i > BigInt('9223372036854775807')
+    ) {
+      throw new Error('value out of range');
+    }
+    return new Value({ I: i.toString() });
+  }
+
+  public static String(x: string): Value {
+    return new Value({ S: x });
+  }
+
+  public static Float(x: number): Value {
+    return new Value({ F: x.toString() });
+  }
+
+  public static Number(x: number | string | BigInt): Value {
+    return new Value({ D: x.toString() });
+  }
+
+  public static Null(): Value {
+    return new Value({ N: 0 });
+  }
+
+  public static Boolean(x: boolean): Value {
+    return new Value({ B: x });
+  }
+
+  public static U128(x: string | number | bigint): Value {
+    const i = BigInt(x);
+    if (
+      i < BigInt(0) ||
+      i > BigInt('340282366920938463463374607431768211455')
+    ) {
+      throw new Error('value out of range');
+    }
+    return new Value({ U1: i.toString() });
+  }
+
+  public static I128(x: string | number | bigint): Value {
+    const i = BigInt(x);
+    if (
+      i < BigInt('-170141183460469231731687303715884105728') ||
+      i > BigInt('170141183460469231731687303715884105727')
+    ) {
+      throw new Error('value out of range');
+    }
+    return new Value({ I1: i.toString() });
+  }
+
   public static fromJSValue(
     x: any,
     customConvert?: (x: any) => Value | null
   ): Value | null {
+    if (x instanceof Value) {
+      return x;
+    }
     switch (typeof x) {
       case 'function':
         return null;
