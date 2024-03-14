@@ -49,7 +49,15 @@ export class Value implements IValue {
   M?: Record<string, Value>;
 
   constructor(obj: IValue) {
-    return Object.assign(this, obj);
+    if (obj instanceof Value) {
+    } else if (obj.A) {
+      obj.A = obj.A.map((x) => new Value(x));
+    } else if (obj.M) {
+      obj.M = Object.fromEntries(
+        Object.entries(obj.M).map(([k, v]) => [k, new Value(v)])
+      );
+    }
+    Object.assign(this, obj);
   }
 
   public type(): string {
