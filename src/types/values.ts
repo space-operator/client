@@ -48,16 +48,106 @@ export class Value implements IValue {
   A?: Value[];
   M?: Record<string, Value>;
 
-  constructor(obj: IValue) {
+  constructor(x?: any, customConvert?: (x: any) => Value | null) {
+    if (x === undefined) {
+      return Value.Null();
+    }
+
+    const value = Value.inferFromJSType(x, customConvert);
+    if (value === null) throw TypeError('null');
+    return value;
+  }
+
+  public static inferFromJSType(
+    x: any,
+    customConvert?: (x: any) => Value | null
+  ): Value | null {
+    if (x instanceof Value) {
+      return x;
+    }
+    switch (typeof x) {
+      case 'function':
+        return null;
+      case 'number':
+        return Value.Decimal(x);
+      case 'boolean':
+        return Value.Boolean(x);
+      case 'string':
+        return Value.String(x);
+      case 'undefined':
+        return Value.Null();
+      case 'bigint':
+        if (x < BigInt(0)) {
+          return Value.I128(x);
+        } else {
+          return Value.U128(x);
+        }
+      case 'symbol':
+        return Value.String(x.toString());
+      case 'object':
+        if (x === null) {
+          return Value.Null();
+        }
+        if (maybePublicKey(x)) {
+          return Value.fromJSON({ B3: x.toBase58() });
+        }
+        if (maybeKeypair(x)) {
+          return Value.fromJSON({
+            B6: bs58.encode([...x.secretKey, ...x.publicKey.encode()]),
+          });
+        }
+        if (x.byteLength != null) {
+          switch (x.byteLength) {
+            case 32:
+              return Value.fromJSON({
+                B3: bs58.encode(x),
+              });
+            case 64:
+              return Value.fromJSON({
+                B6: bs58.encode(x),
+              });
+            default:
+              return Value.fromJSON({
+                BY: base64.fromByteArray(x),
+              });
+          }
+        }
+        if (customConvert !== undefined) {
+          const result = customConvert(x);
+          if (result != null) {
+            return result;
+          }
+        }
+        if (Array.prototype.isPrototypeOf(x)) {
+          return Value.fromJSON({
+            A: Array.from(x)
+              .map((x) => Value.inferFromJSType(x, customConvert))
+              .filter((x) => x != null) as IValue[],
+          });
+        }
+        return Value.fromJSON({
+          M: Object.fromEntries(
+            Object.entries(x)
+              .map(([k, v]) => [k, Value.inferFromJSType(v, customConvert)])
+              .filter(([_k, v]) => v != null)
+          ),
+        });
+    }
+  }
+
+  public static fromJSON(obj: IValue): Value {
     if (obj instanceof Value) {
-    } else if (obj.A) {
-      obj.A = obj.A.map((x) => new Value(x));
+      return obj;
+    }
+
+    if (obj.A) {
+      obj.A = obj.A.map(Value.fromJSON);
     } else if (obj.M) {
       obj.M = Object.fromEntries(
-        Object.entries(obj.M).map(([k, v]) => [k, new Value(v)])
+        Object.entries(obj.M).map(([k, v]) => [k, Value.fromJSON(v)])
       );
     }
-    Object.assign(this, obj);
+    return Object.assign(Object.create(Value.prototype), obj);
   }
 
   public type(): string {
@@ -73,7 +163,7 @@ export class Value implements IValue {
     if (i < BigInt(0) || i > BigInt('18446744073709551615')) {
       throw new Error('value out of range');
     }
-    return new Value({ U: i.toString() });
+    return Value.fromJSON({ U: i.toString() });
   }
 
   public static I64(x: string | number | bigint): Value {
@@ -84,27 +174,27 @@ export class Value implements IValue {
     ) {
       throw new Error('value out of range');
     }
-    return new Value({ I: i.toString() });
+    return Value.fromJSON({ I: i.toString() });
   }
 
   public static String(x: string): Value {
-    return new Value({ S: x });
+    return Value.fromJSON({ S: x });
   }
 
   public static Float(x: number): Value {
-    return new Value({ F: x.toString() });
+    return Value.fromJSON({ F: x.toString() });
   }
 
-  public static Number(x: number | string | BigInt): Value {
-    return new Value({ D: x.toString() });
+  public static Decimal(x: number | string | BigInt): Value {
+    return Value.fromJSON({ D: x.toString() });
   }
 
   public static Null(): Value {
-    return new Value({ N: 0 });
+    return Value.fromJSON({ N: 0 });
   }
 
   public static Boolean(x: boolean): Value {
-    return new Value({ B: x });
+    return Value.fromJSON({ B: x });
   }
 
   public static U128(x: string | number | bigint): Value {
@@ -115,7 +205,7 @@ export class Value implements IValue {
     ) {
       throw new Error('value out of range');
     }
-    return new Value({ U1: i.toString() });
+    return Value.fromJSON({ U1: i.toString() });
   }
 
   public static I128(x: string | number | bigint): Value {
@@ -126,80 +216,7 @@ export class Value implements IValue {
     ) {
       throw new Error('value out of range');
     }
-    return new Value({ I1: i.toString() });
-  }
-
-  public static fromJSValue(
-    x: any,
-    customConvert?: (x: any) => Value | null
-  ): Value | null {
-    if (x instanceof Value) {
-      return x;
-    }
-    switch (typeof x) {
-      case 'function':
-        return null;
-      case 'number':
-        return new Value({ D: x.toString() });
-      case 'boolean':
-        return new Value({ B: x });
-      case 'string':
-        return new Value({ S: x });
-      case 'undefined':
-        return new Value({ N: 0 });
-      case 'bigint':
-        return new Value({ I1: x.toString() });
-      case 'symbol':
-        return new Value({ S: x.toString() });
-      case 'object':
-        if (x === null) {
-          return new Value({ N: 0 });
-        }
-        if (maybePublicKey(x)) {
-          return new Value({ B3: x.toBase58() });
-        }
-        if (maybeKeypair(x)) {
-          return new Value({
-            B6: bs58.encode([...x.secretKey, ...x.publicKey.encode()]),
-          });
-        }
-        if (x.byteLength != null) {
-          switch (x.byteLength) {
-            case 32:
-              return new Value({
-                B3: bs58.encode(x),
-              });
-            case 64:
-              return new Value({
-                B6: bs58.encode(x),
-              });
-            default:
-              return new Value({
-                BY: base64.fromByteArray(x),
-              });
-          }
-        }
-        if (customConvert != null) {
-          const result = customConvert(x);
-          if (result != null) {
-            return result;
-          }
-        }
-        if (Array.prototype.isPrototypeOf(x)) {
-          return new Value({
-            A: Array.from(x)
-              .map((x) => Value.fromJSValue(x, customConvert))
-              .filter((x) => x != null) as IValue[],
-          });
-        }
-        return new Value({
-          M: Object.fromEntries(
-            Object.entries(x)
-              .map(([k, v]) => [k, Value.fromJSValue(v, customConvert)])
-              .filter(([_k, v]) => v != null)
-          ),
-        });
-    }
+    return Value.fromJSON({ I1: i.toString() });
   }
 
   public toJSObject(): any {

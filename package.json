@@ -1,6 +1,6 @@
 {
   "name": "@space-operator/client",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "description": "API Library for space-operator",
   "homepage": "https://github.com/space-operator/client",
   "repository": "https://github.com/space-operator/client",
@@ -18,7 +18,8 @@
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
     "format": "prettier --write \"{src,test}/**/*.ts\"",
-    "build": "rm dist -rf && pnpm run format && pnpm run build:main && pnpm run build:module"
+    "build": "rm dist -rf && pnpm run format && pnpm run build:main && pnpm run build:module",
+    "test": "jest"
   },
   "dependencies": {
     "@solana/web3.js": "^1.89.1",
