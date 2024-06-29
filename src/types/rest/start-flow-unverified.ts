@@ -1,8 +1,9 @@
 import { FlowRunId } from '../common';
-import { Value } from '../values';
+import { IValue, Value } from '../values';
 
 export interface StartFlowUnverifiedParams {
-  inputs?: Record<string, Value>;
+  inputs?: Record<string, IValue>;
+  output_instrutions?: boolean;
 }
 
 export interface StartFlowUnverifiedOutput {

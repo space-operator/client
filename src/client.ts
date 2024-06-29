@@ -17,6 +17,8 @@ import {
 import { SignatureRequest } from './types/ws';
 import * as bs58 from 'bs58';
 import * as web3 from '@solana/web3.js';
+import { GetFlowOutputOutput } from './types/rest/get-flow-output';
+import { IValue, Value } from './types/values';
 
 export interface ClientOptions {
   host?: string;
@@ -118,6 +120,30 @@ export class Client {
         body: JSON.stringify(params),
       });
       return await resp.json();
+    } catch (error: any) {
+      return { error: error.toString() };
+    }
+  }
+
+  async getFlowOutput(
+    runId: FlowRunId,
+    token?: string
+  ): Promise<RestResult<GetFlowOutputOutput>> {
+    try {
+      if (token == null) {
+        token = (await this.getToken()) as any;
+      }
+      if (token == null) {
+        throw new Error('no authentication token');
+      }
+      const resp = await fetch(`${this.host}/flow/output/${runId}`, {
+        method: 'GET',
+        headers: {
+          authorization: token,
+        },
+      });
+      const value: IValue = await resp.json();
+      return Value.fromJSON(value);
     } catch (error: any) {
       return { error: error.toString() };
     }
