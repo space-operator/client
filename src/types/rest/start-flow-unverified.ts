@@ -3,7 +3,7 @@ import { IValue, Value } from '../values';
 
 export interface StartFlowUnverifiedParams {
   inputs?: Record<string, IValue>;
-  output_instrutions?: boolean;
+  output_instructions?: boolean;
 }
 
 export interface StartFlowUnverifiedOutput {
